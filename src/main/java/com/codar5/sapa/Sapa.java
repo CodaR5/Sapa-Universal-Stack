@@ -50,61 +50,57 @@ public class Sapa {
     private void onConfigReloading(ModConfigEvent.Reloading event) {
         if (event.getConfig().getSpec() == Config.SPEC) {
             Config.cachedMaxStackSize = Config.maxStackSize.get();
-            LOGGER.info("Sapa 配置已重载，新堆叠上限: {}", Config.cachedMaxStackSize);
+            LOGGER.info("Sapa 配置已重载，新堆叠上限: {}，正在刷新物品...", Config.cachedMaxStackSize);
+            // 关键：热重载时重新应用组件数据
             reloadAllItems(Config.cachedMaxStackSize);
         }
     }
 
     private void modifyDefaultComponents(ModifyDefaultComponentsEvent event) {
         int maxSize = Config.cachedMaxStackSize;
-
-        // 核心修复：跳过任何拥有耐久度的物品，避免 "durability + stackable" 冲突
+        // 跳过所有有耐久度的物品，避免 IllegalStateException
         event.modifyMatching(
-                item -> !item.components().has(DataComponents.DAMAGE)
-                        && !item.components().has(DataComponents.MAX_DAMAGE),
-                builder -> builder.set(DataComponents.MAX_STACK_SIZE, maxSize)
+            item -> !item.components().has(DataComponents.DAMAGE) && !item.components().has(DataComponents.MAX_DAMAGE),
+            builder -> builder.set(DataComponents.MAX_STACK_SIZE, maxSize)
         );
-        LOGGER.info("默认组件已修改（已跳过有耐久度的物品），堆叠上限: {}", maxSize);
+        LOGGER.info("默认组件已修改（跳过有耐久度的物品），堆叠上限: {}", maxSize);
     }
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
         var registrar = event.registrar("1");
 
         registrar.playToServer(
-                StackSizePayload.TYPE,
-                StackSizePayload.STREAM_CODEC,
-                (payload, context) -> context.enqueueWork(() -> {
-                    int newSize = payload.newSize();
-                    Config.maxStackSize.set(newSize);
-                    Config.SPEC.save();
-                    Config.cachedMaxStackSize = newSize;
-                    reloadAllItems(newSize);
-                    PacketDistributor.sendToAllPlayers(new StackSizeSyncPayload(newSize));
-                    LOGGER.info("玩家 {} 将堆叠上限修改为: {}",
-                            context.player().getName().getString(), newSize);
-                })
+            StackSizePayload.TYPE,
+            StackSizePayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() -> {
+                int newSize = payload.newSize();
+                Config.maxStackSize.set(newSize);
+                Config.SPEC.save();
+                Config.cachedMaxStackSize = newSize;
+                reloadAllItems(newSize);
+                PacketDistributor.sendToAllPlayers(new StackSizeSyncPayload(newSize));
+                LOGGER.info("玩家 {} 将堆叠上限修改为: {}", context.player().getName().getString(), newSize);
+            })
         );
 
         registrar.playToClient(
-                StackSizeSyncPayload.TYPE,
-                StackSizeSyncPayload.STREAM_CODEC,
-                (payload, context) -> {
-                    if (FMLEnvironment.dist == Dist.CLIENT) {
-                        context.enqueueWork(() -> {
-                            Config.maxStackSize.set(payload.syncedSize());
-                            Config.cachedMaxStackSize = payload.syncedSize();
-                        });
-                    }
+            StackSizeSyncPayload.TYPE,
+            StackSizeSyncPayload.STREAM_CODEC,
+            (payload, context) -> {
+                if (FMLEnvironment.dist == Dist.CLIENT) {
+                    context.enqueueWork(() -> {
+                        Config.maxStackSize.set(payload.syncedSize());
+                        Config.cachedMaxStackSize = payload.syncedSize();
+                    });
                 }
+            }
         );
     }
 
     public static void reloadAllItems(int newSize) {
         int success = 0, fail = 0, skipped = 0;
         for (Item item : BuiltInRegistries.ITEM) {
-            // 运行时重载同样需要跳过有耐久度的物品
-            if (item.components().has(DataComponents.DAMAGE)
-                    || item.components().has(DataComponents.MAX_DAMAGE)) {
+            if (item.components().has(DataComponents.DAMAGE) || item.components().has(DataComponents.MAX_DAMAGE)) {
                 skipped++;
                 continue;
             }
@@ -117,8 +113,7 @@ public class Sapa {
                 componentsField.setAccessible(true);
                 Object componentsBuilder = componentsField.get(properties);
                 if (componentsBuilder == null) continue;
-                var setMethod = componentsBuilder.getClass().getMethod(
-                        "set", net.minecraft.core.component.DataComponentType.class, Object.class);
+                var setMethod = componentsBuilder.getClass().getMethod("set", net.minecraft.core.component.DataComponentType.class, Object.class);
                 setMethod.invoke(componentsBuilder, DataComponents.MAX_STACK_SIZE, newSize);
                 success++;
             } catch (Exception e) { fail++; }
@@ -127,18 +122,14 @@ public class Sapa {
     }
 
     public record StackSizePayload(int newSize) implements CustomPacketPayload {
-        public static final Type<StackSizePayload> TYPE =
-                new Type<>(ResourceLocation.fromNamespaceAndPath(MODID, "stack_size_c2s"));
-        public static final StreamCodec<FriendlyByteBuf, StackSizePayload> STREAM_CODEC =
-                StreamCodec.composite(ByteBufCodecs.VAR_INT, StackSizePayload::newSize, StackSizePayload::new);
+        public static final Type<StackSizePayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MODID, "stack_size_c2s"));
+        public static final StreamCodec<FriendlyByteBuf, StackSizePayload> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, StackSizePayload::newSize, StackSizePayload::new);
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
     public record StackSizeSyncPayload(int syncedSize) implements CustomPacketPayload {
-        public static final Type<StackSizeSyncPayload> TYPE =
-                new Type<>(ResourceLocation.fromNamespaceAndPath(MODID, "stack_size_s2c"));
-        public static final StreamCodec<FriendlyByteBuf, StackSizeSyncPayload> STREAM_CODEC =
-                StreamCodec.composite(ByteBufCodecs.VAR_INT, StackSizeSyncPayload::syncedSize, StackSizeSyncPayload::new);
+        public static final Type<StackSizeSyncPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MODID, "stack_size_s2c"));
+        public static final StreamCodec<FriendlyByteBuf, StackSizeSyncPayload> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, StackSizeSyncPayload::syncedSize, StackSizeSyncPayload::new);
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 }
