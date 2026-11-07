@@ -3,7 +3,6 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.147'
     id 'idea'
-    id 'org.spongepowered.mixin' version '0.7.+' // 启用 Mixin 插件
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -43,19 +42,20 @@ tasks.named('jar', Jar).configure {
 neoForge {
     version = project.neo_version
     runs {
-        client {
+        client { 
             client()
-            programArguments.addAll '-mixin.config=sapa.mixins.json' // 注入客户端
+            // MDG 下通过 JVM 参数传递 Mixin 配置
+            jvmArguments.addAll '-mixin.config=sapa.mixins.json'
         }
-        server {
+        server { 
             server()
             programArgument '--nogui'
-            programArguments.addAll '-mixin.config=sapa.mixins.json' // 注入服务端
+            jvmArguments.addAll '-mixin.config=sapa.mixins.json'
         }
         data {
             clientData()
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-            programArguments.addAll '-mixin.config=sapa.mixins.json'
+            jvmArguments.addAll '-mixin.config=sapa.mixins.json'
         }
     }
     mods { "${mod_id}" { sourceSet(sourceSets.main) } }
@@ -80,8 +80,3 @@ sourceSets.main.resources.srcDir generateModMetadata
 neoForge.ideSyncTask generateModMetadata
 
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
-
-// 添加 Mixin 注解处理器
-dependencies {
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-}
