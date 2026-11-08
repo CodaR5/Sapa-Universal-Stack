@@ -22,11 +22,33 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 @Mod(Sapa.MODID)
 public class Sapa {
     public static final String MODID = "sapa";
     public static final Logger LOGGER = LogUtils.getLogger();
+
+    // 缓存反射字段，杜绝高频重载时的内存泄漏和 GC 压力
+    private static final Field ITEM_PROPERTIES_FIELD;
+    private static final Field PROPERTIES_COMPONENTS_FIELD;
+    private static final Method COMPONENTS_SET_METHOD;
+
+    static {
+        try {
+            ITEM_PROPERTIES_FIELD = Item.class.getDeclaredField("properties");
+            ITEM_PROPERTIES_FIELD.setAccessible(true);
+
+            Class<?> propsClass = Class.forName("net.minecraft.world.item.Item$Properties");
+            PROPERTIES_COMPONENTS_FIELD = propsClass.getDeclaredField("components");
+            PROPERTIES_COMPONENTS_FIELD.setAccessible(true);
+
+            Class<?> componentsType = PROPERTIES_COMPONENTS_FIELD.getType();
+            COMPONENTS_SET_METHOD = componentsType.getMethod("set", net.minecraft.core.component.DataComponentType.class, Object.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Sapa 无法初始化反射缓存", e);
+        }
+    }
 
     public Sapa(IEventBus modEventBus, ModContainer modContainer) {
         modContainer.registerConfig(ModConfig.Type.SERVER, Config.SPEC);
@@ -58,8 +80,8 @@ public class Sapa {
     private void modifyDefaultComponents(ModifyDefaultComponentsEvent event) {
         int maxSize = Config.cachedMaxStackSize;
         event.modifyMatching(
-                item -> !item.components().has(DataComponents.DAMAGE) && !item.components().has(DataComponents.MAX_DAMAGE),
-                builder -> builder.set(DataComponents.MAX_STACK_SIZE, maxSize)
+            item -> !item.components().has(DataComponents.DAMAGE) && !item.components().has(DataComponents.MAX_DAMAGE),
+            builder -> builder.set(DataComponents.MAX_STACK_SIZE, maxSize)
         );
         LOGGER.info("默认组件已修改（跳过有耐久度的物品），堆叠上限: {}", maxSize);
     }
@@ -68,30 +90,30 @@ public class Sapa {
         var registrar = event.registrar("1");
 
         registrar.playToServer(
-                StackSizePayload.TYPE,
-                StackSizePayload.STREAM_CODEC,
-                (payload, context) -> context.enqueueWork(() -> {
-                    int newSize = payload.newSize();
-                    Config.maxStackSize.set(newSize);
-                    Config.SPEC.save();
-                    Config.cachedMaxStackSize = newSize;
-                    reloadAllItems(newSize);
-                    PacketDistributor.sendToAllPlayers(new StackSizeSyncPayload(newSize));
-                    LOGGER.info("玩家 {} 将堆叠上限修改为: {}", context.player().getName().getString(), newSize);
-                })
+            StackSizePayload.TYPE,
+            StackSizePayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() -> {
+                int newSize = payload.newSize();
+                Config.maxStackSize.set(newSize);
+                Config.SPEC.save();
+                Config.cachedMaxStackSize = newSize;
+                reloadAllItems(newSize);
+                PacketDistributor.sendToAllPlayers(new StackSizeSyncPayload(newSize));
+                LOGGER.info("玩家 {} 将堆叠上限修改为: {}", context.player().getName().getString(), newSize);
+            })
         );
 
         registrar.playToClient(
-                StackSizeSyncPayload.TYPE,
-                StackSizeSyncPayload.STREAM_CODEC,
-                (payload, context) -> {
-                    if (FMLEnvironment.dist == Dist.CLIENT) {
-                        context.enqueueWork(() -> {
-                            Config.maxStackSize.set(payload.syncedSize());
-                            Config.cachedMaxStackSize = payload.syncedSize();
-                        });
-                    }
+            StackSizeSyncPayload.TYPE,
+            StackSizeSyncPayload.STREAM_CODEC,
+            (payload, context) -> {
+                if (FMLEnvironment.dist == Dist.CLIENT) {
+                    context.enqueueWork(() -> {
+                        Config.maxStackSize.set(payload.syncedSize());
+                        Config.cachedMaxStackSize = payload.syncedSize();
+                    });
                 }
+            }
         );
     }
 
@@ -103,18 +125,18 @@ public class Sapa {
                 continue;
             }
             try {
-                Field propsField = Item.class.getDeclaredField("properties");
-                propsField.setAccessible(true);
-                Object properties = propsField.get(item);
+                // 直接使用缓存的 Field 和 Method，避免内存暴涨
+                Object properties = ITEM_PROPERTIES_FIELD.get(item);
                 if (properties == null) continue;
-                Field componentsField = properties.getClass().getDeclaredField("components");
-                componentsField.setAccessible(true);
-                Object componentsBuilder = componentsField.get(properties);
+                
+                Object componentsBuilder = PROPERTIES_COMPONENTS_FIELD.get(properties);
                 if (componentsBuilder == null) continue;
-                var setMethod = componentsBuilder.getClass().getMethod("set", net.minecraft.core.component.DataComponentType.class, Object.class);
-                setMethod.invoke(componentsBuilder, DataComponents.MAX_STACK_SIZE, newSize);
+                
+                COMPONENTS_SET_METHOD.invoke(componentsBuilder, DataComponents.MAX_STACK_SIZE, newSize);
                 success++;
-            } catch (Exception e) { fail++; }
+            } catch (Exception e) { 
+                fail++; 
+            }
         }
         LOGGER.info("动态重载堆叠上限完成。成功: {}, 跳过(有耐久度): {}, 失败: {}", success, skipped, fail);
     }
