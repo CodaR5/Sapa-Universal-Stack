@@ -54,3 +54,33 @@ Sapa Universal Stack 是一个基于 Minecraft 1.21.1 与 NeoForge 平台的模�
 
 # macOS / Linux
 ./gradlew build
+```
+
+构建产物将输出至 `build/libs/` 目录下。
+
+### 依赖配置
+项目在 `build.gradle` 中通过 `compileOnly` 引入了 Create 及其前置（Ponder, Flywheel, Registrate）的 API，用于在编译期进行 Mixin 注入。这些依赖不会被打包进最终生成的模组文件中。
+
+## 技术实现细节
+
+本模组由以下核心组件构成：
+
+*   `ModifyDefaultComponentsEvent`：在模组加载早期覆盖全局物品的 `MAX_STACK_SIZE` 组件。
+*   **Mixin 注入 (`ItemStackMixin` 等)**：拦截运行时的堆叠上限查询（`getMaxStackSize`）、容器槽位限制（`Container` / `Slot`）以及存档 Codec，实现彻底的逻辑重写。
+*   **Config 缓存机制**：利用静态变量 `cachedMaxStackSize` 作为配置缓存，解决了早期加载事件中配置尚未加载导致的空指针异常（NPE）。
+*   **网络数据包 (`CustomPacketPayload`)**：基于 NeoForge 的现代网络 API 实现 C2S 与 S2C 数据同步。
+*   **反射与内部类操作**：在热重载时，通过反射遍历 `BuiltInRegistries.ITEM`，动态修改物品的 `Item.Properties` 内部组件构建器。
+
+## 许可协议
+
+本项目采用 **GNU General Public License v3.0 (GPL-3.0)** 许可协议。
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+## 免责声明
+
+本模组涉及对 Minecraft 底层及部分第三方模组内部代码的修改。在使用前，请务必备份您的世界存档。对于因安装本模组导致的存档损坏、数据丢失或服务器崩溃，开发者不承担任何责任。在适用法律允许的范围内，本软件按“原样”提供，不附带任何明示或暗示的担保。
