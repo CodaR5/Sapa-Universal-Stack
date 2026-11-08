@@ -10,6 +10,9 @@ logoFile="logo.png"
 authors = "${mod_authors}"
 description = '''${mod_description}'''
 
+displayURL = "${mod_url}"
+issueTrackerURL = "${mod_issues_url}"
+
 [[dependencies.${mod_id}]]
 modId = "neoforge"
 type = "required"
@@ -24,6 +27,5 @@ versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
 
-# 关键：声明 Mixin 配置，让 NeoForge 加载它
 [[mixins]]
 config = "sapa.mixins.json"
