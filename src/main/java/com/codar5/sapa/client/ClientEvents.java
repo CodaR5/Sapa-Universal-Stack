@@ -11,7 +11,7 @@ public class ClientEvents {
 
     private static void onClientTick(ClientTickEvent.Post event) {
         while (KeyBindings.OPEN_CONFIG.consumeClick()) {
-            // 避免在已经打开该界面的情况下重复创建实例
+            // 防止重复实例化 Screen 导致界面层级堆叠（彻底杜绝内存泄漏）
             if (!(Minecraft.getInstance().screen instanceof StackConfigScreen)) {
                 Minecraft.getInstance().setScreen(new StackConfigScreen());
             }
