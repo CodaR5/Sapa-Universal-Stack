@@ -11,12 +11,11 @@ public class SmartInventoryMixin {
 
     /**
      * 修改 SmartInventory 默认构造方法中硬编码的 64。
-     * 目标: public SmartInventory(int slots, SyncedTileEntity te) { this(slots, te, 64, false); }
-     * index = 2 对应 this() 调用中的 stackSize 参数。
+     * 注意：1.21.1 中 SyncedTileEntity 已重命名为 SyncedBlockEntity。
      */
     @ModifyArg(
-        method = "<init>(ILcom/simibubi/create/foundation/tileEntity/SyncedTileEntity;)V",
-        at = @At(value = "INVOKE", target = "Lcom/simibubi/create/foundation/item/SmartInventory;<init>(ILcom/simibubi/create/foundation/tileEntity/SyncedTileEntity;IZ)V"),
+        method = "<init>(ILcom/simibubi/create/foundation/blockEntity/SyncedBlockEntity;)V",
+        at = @At(value = "INVOKE", target = "Lcom/simibubi/create/foundation/item/SmartInventory;<init>(ILcom/simibubi/create/foundation/blockEntity/SyncedBlockEntity;IZ)V"),
         index = 2,
         require = 0
     )
