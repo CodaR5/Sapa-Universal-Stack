@@ -8,7 +8,7 @@
     "ContainerMixin",
     "SlotMixin",
     "ItemStackCodecMixin",
-    "create.FilterSlotMixin“,
+    "create.FilterSlotMixin",
     "create.LogisticsManagerMixin",
     "create.ThresholdSwitchMixin"
   ],
