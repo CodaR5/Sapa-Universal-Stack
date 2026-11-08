@@ -8,9 +8,10 @@
     "ContainerMixin",
     "SlotMixin",
     "ItemStackCodecMixin",
+    "create.SmartInventoryMixin",
+    "create.BasinInventoryMixin",
     "create.FilterSlotMixin",
-    "create.LogisticsManagerMixin",
-    "create.ThresholdSwitchMixin"
+    "create.LogisticsManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
