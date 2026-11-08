@@ -8,16 +8,19 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = ThresholdSwitchBlockEntity.class, remap = false)
 public class ThresholdSwitchMixin {
-
     /**
-     * 拦截阈值开关计算容量时的 Math.min，使其正确识别超过 64 的堆叠上限。
+     * 拦截阈值开关中的 Math.min 调用，使其使用配置的堆叠上限，
+     * 而不是硬编码的 64 或默认的 20 组容量。
      */
     @Redirect(
-            method = "*",
-            at = @At(value = "INVOKE", target = "Ljava/lang/Math;min(II)I")
+        method = "*",
+        at = @At(value = "INVOKE", target = "Ljava/lang/Math;min(II)I")
     )
-    private int sapa$redirectMin(int itemMax, int slotLimit) {
-        // 如果原版逻辑试图用 64 截断，我们则使用配置的上限
-        return Math.min(itemMax, Config.cachedMaxStackSize);
+    private int sapa$redirectMin(int a, int b) {
+        // 如果原版逻辑试图用 64 截断，则使用配置的上限
+        if (a == 64 || b == 64) {
+            return Config.cachedMaxStackSize;
+        }
+        return Math.min(a, b);
     }
 }
