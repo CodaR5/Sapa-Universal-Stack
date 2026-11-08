@@ -7,10 +7,7 @@
     "ItemStackMixin",
     "ContainerMixin",
     "SlotMixin",
-    "ItemStackCodecMixin",
-    "create.FilterSlotMixin",
-    "create.LogisticsManagerMixin",
-    "create.ThresholdSwitchMixin"
+    "ItemStackCodecMixin"
   ],
   "injectors": {
     "defaultRequire": 1
