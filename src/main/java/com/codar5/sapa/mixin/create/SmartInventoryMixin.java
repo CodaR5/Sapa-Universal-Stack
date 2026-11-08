@@ -10,17 +10,17 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 public class SmartInventoryMixin {
 
     /**
-     * 拦截 SmartInventory 构造函数，将硬编码的 stackSize (64) 替换为配置值。
-     * 目标：public SmartInventory(int slots, SyncedTileEntity te, int stackSize, boolean stackNonStackables)
-     * index = 2 对应 stackSize 参数。
+     * 修改 SmartInventory 默认构造方法中硬编码的 64。
+     * 目标: public SmartInventory(int slots, SyncedTileEntity te) { this(slots, te, 64, false); }
+     * index = 2 对应 this() 调用中的 stackSize 参数。
      */
     @ModifyArg(
-        method = "<init>(ILcom/simibubi/create/foundation/tileEntity/SyncedTileEntity;IZ)V",
-        at = @At(value = "INVOKE", target = "Lcom/simibubi/create/foundation/item/SmartInventory;<init>(Lnet/minecraftforge/items/wrapper/RecipeWrapper;)V"),
+        method = "<init>(ILcom/simibubi/create/foundation/tileEntity/SyncedTileEntity;)V",
+        at = @At(value = "INVOKE", target = "Lcom/simibubi/create/foundation/item/SmartInventory;<init>(ILcom/simibubi/create/foundation/tileEntity/SyncedTileEntity;IZ)V"),
         index = 2,
         require = 0
     )
-    private int sapa$modifySmartInventoryStackSize(int original) {
+    private int sapa$modifyDefaultStackSize(int original) {
         return Config.cachedMaxStackSize;
     }
 }
