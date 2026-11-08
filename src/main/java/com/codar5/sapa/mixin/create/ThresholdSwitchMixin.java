@@ -4,23 +4,22 @@ import com.codar5.sapa.Config;
 import com.simibubi.create.content.redstone.thresholdSwitch.ThresholdSwitchBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 @Mixin(value = ThresholdSwitchBlockEntity.class, remap = false)
 public class ThresholdSwitchMixin {
+
     /**
-     * 拦截阈值开关中的 Math.min 调用，使其使用配置的堆叠上限，
-     * 而不是硬编码的 64 或默认的 20 组容量。
+     * 拦截阈值开关中的硬编码 64，替换为配置值。
+     * require = 0 保证如果找不到也不会崩溃。
      */
-    @Redirect(
+    @ModifyConstant(
         method = "*",
-        at = @At(value = "INVOKE", target = "Ljava/lang/Math;min(II)I")
+        constant = @Constant(intValue = 64),
+        require = 0
     )
-    private int sapa$redirectMin(int a, int b) {
-        // 如果原版逻辑试图用 64 截断，则使用配置的上限
-        if (a == 64 || b == 64) {
-            return Config.cachedMaxStackSize;
-        }
-        return Math.min(a, b);
+    private int sapa$modifyHardcodedStackSize(int original) {
+        return Config.cachedMaxStackSize;
     }
 }
