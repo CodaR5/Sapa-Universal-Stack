@@ -9,6 +9,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(value = FilteringBehaviour.class, remap = false)
 public class FilterSlotMixin {
 
+    /**
+     * 强制过滤器上下文中的最大堆叠数返回 64。
+     * 这是唯一刻意“不提升”的硬编码位置，用于保护 GUI 稳定。
+     */
     @Redirect(
         method = "*",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;getMaxStackSize()I"),
