@@ -4,14 +4,15 @@
   "package": "com.codar5.sapa.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "ItemStackMixin",
-    "ContainerMixin",
-    "SlotMixin",
-    "ItemStackCodecMixin",
-    "create.SmartInventoryMixin",
-    "create.BasinInventoryMixin",
-    "create.FilterSlotMixin",
-    "create.LogisticsManagerMixin"
+  "ItemStackMixin",
+  "ContainerMixin",
+  "SlotMixin",
+  "ItemStackCodecMixin",
+  "create.FilterSlotMixin",
+  "create.LogisticsManagerMixin",
+  "create.BasinInventoryConstructorMixin",
+  "create.BasinInventoryInsertMixin",
+  "create.SmartInventoryMixin"
   ],
   "injectors": {
     "defaultRequire": 1
