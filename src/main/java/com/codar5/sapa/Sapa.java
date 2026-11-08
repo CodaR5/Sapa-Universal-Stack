@@ -51,17 +51,15 @@ public class Sapa {
         if (event.getConfig().getSpec() == Config.SPEC) {
             Config.cachedMaxStackSize = Config.maxStackSize.get();
             LOGGER.info("Sapa 配置已重载，新堆叠上限: {}，正在刷新物品...", Config.cachedMaxStackSize);
-            // 关键：热重载时重新应用组件数据
             reloadAllItems(Config.cachedMaxStackSize);
         }
     }
 
     private void modifyDefaultComponents(ModifyDefaultComponentsEvent event) {
         int maxSize = Config.cachedMaxStackSize;
-        // 跳过所有有耐久度的物品，避免 IllegalStateException
         event.modifyMatching(
-            item -> !item.components().has(DataComponents.DAMAGE) && !item.components().has(DataComponents.MAX_DAMAGE),
-            builder -> builder.set(DataComponents.MAX_STACK_SIZE, maxSize)
+                item -> !item.components().has(DataComponents.DAMAGE) && !item.components().has(DataComponents.MAX_DAMAGE),
+                builder -> builder.set(DataComponents.MAX_STACK_SIZE, maxSize)
         );
         LOGGER.info("默认组件已修改（跳过有耐久度的物品），堆叠上限: {}", maxSize);
     }
@@ -70,30 +68,30 @@ public class Sapa {
         var registrar = event.registrar("1");
 
         registrar.playToServer(
-            StackSizePayload.TYPE,
-            StackSizePayload.STREAM_CODEC,
-            (payload, context) -> context.enqueueWork(() -> {
-                int newSize = payload.newSize();
-                Config.maxStackSize.set(newSize);
-                Config.SPEC.save();
-                Config.cachedMaxStackSize = newSize;
-                reloadAllItems(newSize);
-                PacketDistributor.sendToAllPlayers(new StackSizeSyncPayload(newSize));
-                LOGGER.info("玩家 {} 将堆叠上限修改为: {}", context.player().getName().getString(), newSize);
-            })
+                StackSizePayload.TYPE,
+                StackSizePayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    int newSize = payload.newSize();
+                    Config.maxStackSize.set(newSize);
+                    Config.SPEC.save();
+                    Config.cachedMaxStackSize = newSize;
+                    reloadAllItems(newSize);
+                    PacketDistributor.sendToAllPlayers(new StackSizeSyncPayload(newSize));
+                    LOGGER.info("玩家 {} 将堆叠上限修改为: {}", context.player().getName().getString(), newSize);
+                })
         );
 
         registrar.playToClient(
-            StackSizeSyncPayload.TYPE,
-            StackSizeSyncPayload.STREAM_CODEC,
-            (payload, context) -> {
-                if (FMLEnvironment.dist == Dist.CLIENT) {
-                    context.enqueueWork(() -> {
-                        Config.maxStackSize.set(payload.syncedSize());
-                        Config.cachedMaxStackSize = payload.syncedSize();
-                    });
+                StackSizeSyncPayload.TYPE,
+                StackSizeSyncPayload.STREAM_CODEC,
+                (payload, context) -> {
+                    if (FMLEnvironment.dist == Dist.CLIENT) {
+                        context.enqueueWork(() -> {
+                            Config.maxStackSize.set(payload.syncedSize());
+                            Config.cachedMaxStackSize = payload.syncedSize();
+                        });
+                    }
                 }
-            }
         );
     }
 

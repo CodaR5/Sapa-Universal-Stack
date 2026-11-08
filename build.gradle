@@ -14,14 +14,11 @@ group = mod_group_id
 
 repositories {
     mavenCentral()
-    maven {
-        name = "NeoForged"
-        url = "https://maven.neoforged.net/releases"
-    }
-    maven {
-        name = "Minecraft"
-        url = "https://libraries.minecraft.net/"
-    }
+    maven { url = "https://neoforged.forgecdn.net/releases" }
+    maven { url = "https://maven.neoforged.net/releases" }
+    maven { url = "https://libraries.minecraft.net/" }
+    maven { url = "https://maven.createmod.net" }
+    maven { url = "https://maven.ithundxr.dev/snapshots" }
 }
 
 sourceSets.main.resources {
@@ -42,12 +39,11 @@ tasks.named('jar', Jar).configure {
 neoForge {
     version = project.neo_version
     runs {
-        client { 
+        client {
             client()
-            // MDG 下通过 JVM 参数传递 Mixin 配置
             jvmArguments.addAll '-mixin.config=sapa.mixins.json'
         }
-        server { 
+        server {
             server()
             programArgument '--nogui'
             jvmArguments.addAll '-mixin.config=sapa.mixins.json'
@@ -80,3 +76,13 @@ sourceSets.main.resources.srcDir generateModMetadata
 neoForge.ideSyncTask generateModMetadata
 
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+dependencies {
+    implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") {
+        transitive = false
+    }
+    implementation("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
+    compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
+    runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
+    implementation("com.tterrag.registrate:Registrate:${registrate_version}")
+}
