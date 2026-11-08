@@ -6,6 +6,8 @@ Sapa Universal Stack 是一个基于 Minecraft 1.21.1 与 NeoForge 平台的模�
 
 本模组深度集成了 NeoForge 的数据组件（Data Components）系统，并内置了针对大型模组（如机械动力 Create）的底层兼容性修复，旨在为整合包玩家与服务器管理员提供稳定、高效的堆叠管理解决方案。
 
+**许可提示**：本项目采用 AGPL-3.0 许可，并附带 Minecraft 链接例外。若您修改了本模组的服务端代码并用于公开的网络服务（如公开服务器），您有义务向交互用户开源您修改后的完整对应源代码。详情请参阅底部的[许可协议](#许可协议)章节。
+
 ## 核心特性
 
 1. **全局自定义堆叠上限**：支持将物品的堆叠上限设置为 1 - 1024。
@@ -73,13 +75,21 @@ Sapa Universal Stack 是一个基于 Minecraft 1.21.1 与 NeoForge 平台的模�
 
 ## 许可协议
 
-本项目采用 **GNU Lesser General Public License v3.0 (LGPL-3.0)** 许可协议。
+本项目采用 **GNU Affero General Public License v3.0 (AGPL-3.0)** 许可协议，并依据该协议第 7 条附加了 **Minecraft 链接例外 (Minecraft Linking Exception)**。
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+### 附加例外条款声明 (Additional Permission)
+
+As a special exception, the copyright holders of this project give you permission to link or combine this project with the proprietary code of Minecraft (including but not limited to the "Minecraft" game client and server software) and with the NeoForge modding API, without the terms and conditions of the GNU Affero General Public License version 3 ("AGPLv3") applying to those proprietary components.
+
+This exception applies only to the act of linking or combining, and does not grant any license or rights to the proprietary Minecraft software or the NeoForge API themselves.
+
+This exception is an additional permission under section 7 of the AGPLv3.
 
 ## 免责声明
 
