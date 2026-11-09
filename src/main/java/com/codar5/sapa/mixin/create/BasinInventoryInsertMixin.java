@@ -19,22 +19,13 @@ public abstract class BasinInventoryInsertMixin extends SmartInventory {
     }
 
     /**
-     * 拦截 BasinInventory 的插入逻辑，绕过“单槽位”检查。
+     * 拦截 BasinInventory 的插入逻辑，绕过“同类物品只能占一个槽位”的检查。
      */
     @Inject(method = "insertItem", at = @At("HEAD"), cancellable = true)
     private void sapa$bypassSingleStackCheck(int slot, ItemStack stack, boolean simulate, CallbackInfoReturnable<ItemStack> cir) {
         if (Config.cachedMaxStackSize > 64) {
+            // 直接调用父类的标准插入逻辑
             cir.setReturnValue(super.insertItem(slot, stack, simulate));
-        }
-    }
-
-    /**
-     * 核心修复：重写槽位容量限制，避免每个槽位最多只能放 64 个（导致总共只能放 576 个）。
-     */
-    @Inject(method = "getSlotLimit", at = @At("HEAD"), cancellable = true)
-    private void sapa$modifySlotLimit(int slot, CallbackInfoReturnable<Integer> cir) {
-        if (Config.cachedMaxStackSize > 64) {
-            cir.setReturnValue(Config.cachedMaxStackSize);
         }
     }
 }
