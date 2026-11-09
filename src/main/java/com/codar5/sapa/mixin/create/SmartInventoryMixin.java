@@ -11,7 +11,7 @@ public class SmartInventoryMixin {
 
     /**
      * 修改 SmartInventory 默认构造方法中硬编码的 64。
-     * 注意：1.21.1 中 SyncedTileEntity 已重命名为 SyncedBlockEntity。
+     * 关键：由于注入点在 this() 调用之前，处理方法必须是 static。
      */
     @ModifyArg(
         method = "<init>(ILcom/simibubi/create/foundation/blockEntity/SyncedBlockEntity;)V",
@@ -19,7 +19,7 @@ public class SmartInventoryMixin {
         index = 2,
         require = 0
     )
-    private int sapa$modifyDefaultStackSize(int original) {
+    private static int sapa$modifyDefaultStackSize(int original) {
         return Config.cachedMaxStackSize;
     }
 }
