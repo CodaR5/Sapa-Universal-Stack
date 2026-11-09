@@ -12,6 +12,7 @@
   "create.LogisticsManagerMixin",
   "create.ThresholdSwitchMixin",
   "create.SmartInventoryLimitMixin",
+  "create.BasinInventoryConstructorMixin",
   "create.BasinInventoryInsertMixin"
   ],
   "injectors": {
