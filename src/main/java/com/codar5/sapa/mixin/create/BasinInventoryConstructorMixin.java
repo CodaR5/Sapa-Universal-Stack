@@ -25,7 +25,7 @@ public class BasinInventoryConstructorMixin {
         index = 3,
         require = 0
     )
-    private static boolean sapa$modifyNonStackables(boolean original) {
-        return false;
+    private static boolean sapa$modifyStackNonStackables(boolean original) {
+        return false; 
     }
 }
