@@ -4,16 +4,16 @@
   "package": "com.codar5.sapa.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-  "ItemStackMixin",
-  "ContainerMixin",
-  "SlotMixin",
-  "ItemStackCodecMixin",
-  "create.FilterSlotMixin",
-  "create.LogisticsManagerMixin",
-  "create.ThresholdSwitchMixin",
-  "create.SmartInventoryLimitMixin",
-  "create.BasinInventoryConstructorMixin",
-  "create.BasinInventoryInsertMixin"
+    "ItemStackMixin",
+    "ContainerMixin",
+    "SlotMixin",
+    "ItemStackCodecMixin",
+    "neoforge.ItemStackHandlerMixin",
+    "create.FilterSlotMixin",
+    "create.LogisticsManagerMixin",
+    "create.ThresholdSwitchMixin",
+    "create.BasinInventoryConstructorMixin",
+    "create.BasinInventoryInsertMixin"
   ],
   "injectors": {
     "defaultRequire": 1
