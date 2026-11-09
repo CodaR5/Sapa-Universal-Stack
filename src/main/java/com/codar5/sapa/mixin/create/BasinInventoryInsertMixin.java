@@ -13,18 +13,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = BasinInventory.class, remap = false)
 public abstract class BasinInventoryInsertMixin extends SmartInventory {
 
-    // 必须提供与父类匹配的构造函数
     public BasinInventoryInsertMixin(int slots, SyncedBlockEntity te) {
         super(slots, te);
     }
 
-    /**
-     * 拦截 BasinInventory 的插入逻辑，绕过“同类物品只能占一个槽位”的检查。
-     */
     @Inject(method = "insertItem", at = @At("HEAD"), cancellable = true)
     private void sapa$bypassSingleStackCheck(int slot, ItemStack stack, boolean simulate, CallbackInfoReturnable<ItemStack> cir) {
         if (Config.cachedMaxStackSize > 64) {
-            // 直接调用父类的标准插入逻辑
             cir.setReturnValue(super.insertItem(slot, stack, simulate));
         }
     }
