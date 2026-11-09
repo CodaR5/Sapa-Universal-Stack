@@ -11,7 +11,7 @@ public class BasinInventoryConstructorMixin {
 
     /**
      * 拦截 BasinInventory 构造，将硬编码的 16 替换为配置值。
-     * 注意：1.21.1 中 SyncedTileEntity 已重命名为 SyncedBlockEntity。
+     * 关键：由于注入点在 super() 调用之前，处理方法必须是 static。
      */
     @ModifyArg(
         method = "<init>(ILcom/simibubi/create/content/processing/basin/BasinBlockEntity;)V",
@@ -19,7 +19,7 @@ public class BasinInventoryConstructorMixin {
         index = 2,
         require = 0
     )
-    private int sapa$modifyBasinCapacity(int original) {
+    private static int sapa$modifyBasinCapacity(int original) {
         return Config.cachedMaxStackSize;
     }
 }
