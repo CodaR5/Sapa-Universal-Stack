@@ -10,8 +10,9 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 public class BasinInventoryConstructorMixin {
 
     /**
-     * 拦截 BasinInventory 构造，将硬编码的 16 替换为配置值。
-     * 关键：由于注入点在 super() 调用之前，处理方法必须是 static。
+     * 同时修改 stackSize 和 stackNonStackables 参数。
+     * index 2 = stackSize (原来为 16)
+     * index 3 = stackNonStackables (原来为 true)
      */
     @ModifyArg(
         method = "<init>(ILcom/simibubi/create/content/processing/basin/BasinBlockEntity;)V",
@@ -19,7 +20,17 @@ public class BasinInventoryConstructorMixin {
         index = 2,
         require = 0
     )
-    private static int sapa$modifyBasinCapacity(int original) {
+    private int sapa$modifyStackSize(int original) {
         return Config.cachedMaxStackSize;
+    }
+
+    @ModifyArg(
+        method = "<init>(ILcom/simibubi/create/content/processing/basin/BasinBlockEntity;)V",
+        at = @At(value = "INVOKE", target = "Lcom/simibubi/create/foundation/item/SmartInventory;<init>(ILcom/simibubi/create/foundation/blockEntity/SyncedBlockEntity;IZ)V"),
+        index = 3,
+        require = 0
+    )
+    private boolean sapa$modifyStackNonStackables(boolean original) {
+        return false; // 关键：关闭“不可堆叠物品上限为64”的保护
     }
 }
