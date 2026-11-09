@@ -1,26 +1,62 @@
 package com.codar5.sapa.mixin.create;
 
 import com.simibubi.create.content.processing.basin.BasinInventory;
-import com.simibubi.create.foundation.item.SmartInventory;
+import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(value = BasinInventory.class, remap = false)
-public class BasinInventoryInsertMixin {
+public abstract class BasinInventoryInsertMixin {
+
+    // 使用 @Shadow 访问父类（ItemStackHandler）中的槽位列表
+    @Shadow
+    protected NonNullList<ItemStack> stacks;
+
+    // 使用 @Shadow 访问通知槽位改变的方法
+    @Shadow
+    protected abstract void onContentsChanged(int slot);
+
+    // 使用 @Shadow 访问获取槽位上限的方法
+    @Shadow
+    protected abstract int getStackLimit(int slot, ItemStack stack);
 
     /**
-     * 重定向对 super.insertItem 的调用，但关键在于绕过前置的循环检查。
-     * 这里采用 @Redirect 直接返回父类的插入结果，从而跳过 BasinInventory 的 "单组" 检查逻辑。
+     * 完全重写 BasinInventory 的插入逻辑。
+     * 丢弃 Create 原本的“仅允许单一物品堆叠”检查，直接执行标准插入。
      */
-    @Redirect(
-        method = "insertItem",
-        at = @At(value = "INVOKE", target = "Lcom/simibubi/create/foundation/item/SmartInventory;insertItem(ILnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/item/ItemStack;"),
-        require = 0
-    )
-    private ItemStack sapa$bypassSingleStackCheck(SmartInventory inventory, int slot, ItemStack stack, boolean simulate) {
-        // 直接调用父类的 insertItem，跳过 BasinInventory 重写逻辑中的前置检查
-        return inventory.insertItem(slot, stack, simulate);
+    @Overwrite
+    public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+        if (stack.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+
+        ItemStack existing = this.stacks.get(slot);
+        int limit = getStackLimit(slot, stack);
+
+        if (!existing.isEmpty()) {
+            if (!ItemStack.isSameItemSameComponents(existing, stack)) {
+                return stack;
+            }
+            limit -= existing.getCount();
+        }
+
+        if (limit <= 0) {
+            return stack;
+        }
+
+        boolean reachedLimit = stack.getCount() > limit;
+
+        if (!simulate) {
+            if (existing.isEmpty()) {
+                this.stacks.set(slot, reachedLimit ? stack.copyWithCount(limit) : stack.copy());
+            } else {
+                existing.grow(reachedLimit ? limit : stack.getCount());
+            }
+            this.onContentsChanged(slot);
+        }
+
+        return reachedLimit ? stack.copyWithCount(stack.getCount() - limit) : ItemStack.EMPTY;
     }
 }
