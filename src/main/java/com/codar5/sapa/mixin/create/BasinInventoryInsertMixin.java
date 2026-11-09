@@ -13,22 +13,28 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = BasinInventory.class, remap = false)
 public abstract class BasinInventoryInsertMixin extends SmartInventory {
 
-    // 必须提供与父类匹配的构造函数，参数类型必须是 SyncedBlockEntity
+    // 必须提供与父类匹配的构造函数
     public BasinInventoryInsertMixin(int slots, SyncedBlockEntity te) {
         super(slots, te);
     }
 
     /**
-     * 拦截 BasinInventory 的插入逻辑。
-     * 当配置堆叠上限 > 64 时，直接调用父类 SmartInventory 的 insertItem，
-     * 绕过 BasinInventory 重写方法中的“同类物品只能占一个槽位”检查。
+     * 拦截 BasinInventory 的插入逻辑，绕过“单槽位”检查。
      */
     @Inject(method = "insertItem", at = @At("HEAD"), cancellable = true)
     private void sapa$bypassSingleStackCheck(int slot, ItemStack stack, boolean simulate, CallbackInfoReturnable<ItemStack> cir) {
         if (Config.cachedMaxStackSize > 64) {
-            // 直接调用父类的 insertItem，执行标准的 ItemStackHandler 插入逻辑
-            ItemStack result = super.insertItem(slot, stack, simulate);
-            cir.setReturnValue(result);
+            cir.setReturnValue(super.insertItem(slot, stack, simulate));
+        }
+    }
+
+    /**
+     * 核心修复：重写槽位容量限制，避免每个槽位最多只能放 64 个（导致总共只能放 576 个）。
+     */
+    @Inject(method = "getSlotLimit", at = @At("HEAD"), cancellable = true)
+    private void sapa$modifySlotLimit(int slot, CallbackInfoReturnable<Integer> cir) {
+        if (Config.cachedMaxStackSize > 64) {
+            cir.setReturnValue(Config.cachedMaxStackSize);
         }
     }
 }
