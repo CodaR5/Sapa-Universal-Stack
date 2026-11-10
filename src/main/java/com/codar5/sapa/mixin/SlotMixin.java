@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Slot.class)
 public abstract class SlotMixin {
 
-    @Inject(method = "getMaxStackSize()I", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getMaxStackSize()I", at = @At("RETURN"), cancellable = true)
     private void sapa$overrideSlotMaxStackSize(CallbackInfoReturnable<Integer> cir) {
         cir.setReturnValue(Config.cachedMaxStackSize);
     }
