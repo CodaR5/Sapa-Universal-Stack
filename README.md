@@ -1,96 +1,60 @@
-# Sapa Universal Stack
+# GameInfo Unofficial Port
 
-## 项目概述
+GameInfo Unofficial Port 是 ifcifc 原版 GameInfo 的非官方移植版。原版仓库在 [GitLab](https://gitlab.com/ifcifc94/gameinfo-mod)，本仓库不是原作者维护，也不是官方分支。
 
-Sapa Universal Stack 是一个基于 Minecraft 1.21.1 与 NeoForge 平台的模组。其核心功能是突破原版游戏中物品的堆叠上限限制，允许玩家将最大堆叠数量自定义为 1 至 1024 之间的任意数值。
+> **版权与来源声明**
+> 本项目基于 basketikun、ifcifc 的 gameinfo 早期版本开发，针对高版本 Minecraft 进行了代码适配、重构与功能扩展。
+> 原始代码版权归原作者所有。**本项目对原始代码的修改部分依据 GNU LGPL-3.0 许可证开源。** 
+> 如您是原作者且不希望此项目继续分发，请联系我，我将立即删除相关代码及发布物。
 
-本模组深度集成了 NeoForge 的数据组件（Data Components）系统，并内置了针对大型模组（如机械动力 Create）的底层兼容性修复，旨在为整合包玩家与服务器管理员提供稳定、高效的堆叠管理解决方案。
+模组提供 FPS、坐标显示、准星方块与实体检测、熔炉数据同步、史莱姆区块判定、可滚动配置界面以及客户端与服务端之间的网络通信。客户端必须安装；服务端可选安装，安装后部分功能才完整。
 
-**许可提示**：本项目采用 AGPL-3.0 许可，并附带 Minecraft 链接例外。若您修改了本模组的服务端代码并用于公开的网络服务（如公开服务器），您有义务向交互用户开源您修改后的完整对应源代码。详情请参阅底部的[许可协议](#许可协议)章节。
+## 功能
 
-## 核心特性
+HUD 显示项均可单独开关：
+- FPS
+- 游戏天数与游戏内时间
+- 当前坐标与朝向
+- 当前生物群系
+- 下界坐标转换：主世界显示 `N-XZ`（坐标 / 8），下界显示 `O-XZ`（坐标 × 8）
+- 右侧装备耐久
+- 右上角版本号，可自定义，也可跟随游戏版本
+- 准星指向的方块信息
+- 准星指向的实体血量
+- 准星指向熔炉或打开熔炉时，显示输入、燃料、输出槽的物品
+- 坐标行后的 `- Slime Chunk` 标记，显示为绿色
+- 纯净服务端种子设定, 如果伺服器已安装, 可忽略, 它会自动获取.
 
-1. **全局自定义堆叠上限**：支持将物品的堆叠上限设置为 1 - 1024。
-2. **智能机制过滤**：自动检测并跳过具有耐久度的物品（如工具、武器、盔甲）。由于 Minecraft 底层机制禁止具有耐久度的物品同时具备大于 1 的堆叠上限，本模组会保持这些物品的默认行为，避免引发游戏崩溃。
-3. **游戏内配置界面**：默认按下 `N` 键可呼出图形化配置界面。支持滑块拖动与数值精确输入，并实时同步显示。
-4. **热重载机制**：在配置界面应用新数值，或直接修改 `config/sapa-server.toml` 文件后，模组会自动重载所有注册物品的属性，无需重启游戏或服务器。
-5. **多人游戏同步**：内置自定义网络通信协议（Payload）。客户端修改数值后，会实时同步至服务端并广播给所有在线玩家。
-6. **大数值显示优化**：内置 Mixin 渲染调整，当物品数量过多时自动缩放字体，防止数字溢出物品格。
+**按键与命令：**
+- `U`：打开配置界面
+- `/gameinfo`：模组主命令
+- `/chunk`：区块管理命令，支持 `load`、`unload`、`list`、`check`
+- `/giseed`：管理你的游戏种子, 可以`show`、`set`、`clear`
 
-## 兼容性说明
+配置界面为单页滚动布局。配置分为基础信息、高级信息、自定义位置与颜色三组。安装 Mod Menu 后可从 Mod Menu 直接打开。
 
-### 机械动力 (Create) 适配
-由于机械动力内部存在大量硬编码的堆叠上限（如 64），本模组通过 Mixin 技术对以下 Create 内部逻辑进行了定向修复：
-*   **过滤器 GUI 溢出修复**：拦截 `FilteringBehaviour` 的堆叠上限读取，强制限制为 64，防止智能漏斗等设备的 GUI 因数值过大而崩溃或溢出。
-*   **阈值开关容量计算**：修正 `ThresholdSwitchBlockEntity` 中的硬编码截断逻辑，确保红石信号能正确识别大堆叠容器的实际容量。
-*   **物流网络统计**：重定向 `LogisticsManager` 的数量汇总逻辑，确保库存网络能正确读取超过 64 的真实物品数量。
-*   *注：本模组针对 Create 的兼容 Mixin 均添加了 `require = 0` 容错处理，确保在 Create 版本更新导致方法变动时，不会引发游戏崩溃。*
+## 安装
 
-### 其他模组兼容
-*   **JEI / REI**：通过底层组件修改，物品管理器会正常读取新的堆叠上限。
-*   **渲染优化模组 (Sodium / Iris / ImmediatelyFast)**：Mixin 注入点避开渲染管线，无冲突。
-*   **存档持久化**：重写了 `ItemStack` 的 Codec 序列化逻辑，解除了原版对存档读取上限为 99 的限制，确保退出重进后大堆叠物品不丢失。
+需要 Fabric Loader 和 Fabric API。支持的游戏版本以 [Modrinth](https://modrinth.com/mod/gameinfo) 页面为准。
 
-## 安装与使用
+- **客户端安装**：将对应版本的 `.jar` 放入 `.minecraft/mods/` 后启动游戏。
+- **服务端安装（可选但建议）**：安装后，熔炉数据由服务端实时扫描并同步，可避免客户端数据延迟；多人游戏中的史莱姆区块由服务端计算并下发结果，不向客户端暴露世界种子。服务端未安装本模组时，客户端不会崩溃，史莱姆区块在多人模式下不显示，熔炉数据将使用缓存。单机模式下史莱姆区块由本地计算，不依赖服务端。
 
-### 环境要求
-*   Minecraft 1.21.1
-*   NeoForge 21.1.1 及以上版本
+## 配置
 
-### 使用方法
-1. 将构建好的 `.jar` 文件放入 `mods` 文件夹。
-2. 启动游戏，在主界面或游戏内按下 `N` 键（可在按键设置中修改）。
-3. 在弹出的界面中调整“堆叠上限”，点击“应用并同步”。
-4. 也可以在游戏目录的 `config/sapa-server.toml` 中手动修改 `maxStackSize` 数值。
+配置文件位于 `config/gameinfo.properties`，包含全局开关、颜色、位置以及各功能独立开关。游戏内按 `U` 也可直接修改，修改后即时生效。
 
-## 开发者构建指南
+## 多语言
 
-本项目采用 Gradle 与 ModDevGradle (MDG) 插件进行构建。
+内置 2 种语言：英语、简体中文。
 
-### 构建命令
-在项目根目录执行以下命令：
+## 构建
+
+需要 JDK 25。在项目根目录执行：
 
 ```bash
 # Windows
-.\gradlew build
+gradlew.bat build
 
 # macOS / Linux
 ./gradlew build
-```
-
-构建产物将输出至 `build/libs/` 目录下。
-
-### 依赖配置
-项目在 `build.gradle` 中通过 `compileOnly` 引入了 Create 及其前置（Ponder, Flywheel, Registrate）的 API，用于在编译期进行 Mixin 注入。这些依赖不会被打包进最终生成的模组文件中。
-
-## 技术实现细节
-
-本模组由以下核心组件构成：
-
-*   `ModifyDefaultComponentsEvent`：在模组加载早期覆盖全局物品的 `MAX_STACK_SIZE` 组件。
-*   **Mixin 注入 (`ItemStackMixin` 等)**：拦截运行时的堆叠上限查询（`getMaxStackSize`）、容器槽位限制（`Container` / `Slot`）以及存档 Codec，实现彻底的逻辑重写。
-*   **Config 缓存机制**：利用静态变量 `cachedMaxStackSize` 作为配置缓存，解决了早期加载事件中配置尚未加载导致的空指针异常（NPE）。
-*   **网络数据包 (`CustomPacketPayload`)**：基于 NeoForge 的现代网络 API 实现 C2S 与 S2C 数据同步。
-*   **反射与内部类操作**：在热重载时，通过反射遍历 `BuiltInRegistries.ITEM`，动态修改物品的 `Item.Properties` 内部组件构建器。
-
-## 许可协议
-
-本项目采用 **GNU Affero General Public License v3.0 (AGPL-3.0)** 许可协议，并依据该协议第 7 条附加了 **Minecraft 链接例外 (Minecraft Linking Exception)**。
-
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
-
-### 附加例外条款声明 (Additional Permission)
-
-As a special exception, the copyright holders of this project give you permission to link or combine this project with the proprietary code of Minecraft (including but not limited to the "Minecraft" game client and server software) and with the NeoForge modding API, without the terms and conditions of the GNU Affero General Public License version 3 ("AGPLv3") applying to those proprietary components.
-
-This exception applies only to the act of linking or combining, and does not grant any license or rights to the proprietary Minecraft software or the NeoForge API themselves.
-
-This exception is an additional permission under section 7 of the AGPLv3.
-
-## 免责声明
-
-本模组涉及对 Minecraft 底层及部分第三方模组内部代码的修改。在使用前，请务必备份您的世界存档。对于因安装本模组导致的存档损坏、数据丢失或服务器崩溃，开发者不承担任何责任。在适用法律允许的范围内，本软件按“原样”提供，不附带任何明示或暗示的担保。
