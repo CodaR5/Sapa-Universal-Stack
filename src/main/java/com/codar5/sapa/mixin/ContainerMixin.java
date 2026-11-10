@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Container.class)
 public interface ContainerMixin {
 
-    @Inject(method = "getMaxStackSize(Lnet/minecraft/world/item/ItemStack;)I", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getMaxStackSize(Lnet/minecraft/world/item/ItemStack;)I", at = @At("RETURN"), cancellable = true)
     private void sapa$overrideContainerMaxStackSize(ItemStack stack, CallbackInfoReturnable<Integer> cir) {
         if (!stack.isEmpty()) {
             cir.setReturnValue(Config.cachedMaxStackSize);
